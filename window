@@ -1,5 +1,73 @@
 import pygame
+pygame.init()
+
+import json
+
 from decimal import Decimal
 decimal = Decimal
 
-print(decimal("1"))
+from Verify_Game_Files import verifyGameFiles
+from Save_Preferences import savePrefs
+
+
+
+
+def autoVer():
+	verifyGameFiles(default_preferences)
+
+
+
+
+
+
+##########################################
+##                                      ##
+##             layout setup             ##
+##                                      ##
+##########################################
+
+class bigTimerClass():
+
+	def __init__(self, inFontTotal=None, inFont=None, inFontSize=50):
+
+		if inFont == None:
+			fontFamily = preferences["defaultFontFamily"]
+		else:
+			fontFamily = inFont
+
+		# inFontTotal is whole pygame font object
+		if inFontTotal == None:
+			try:
+				self.font = pygame.font.Font(fontFamily, inFontSize)
+			except:
+				self.font = pygame.font.Font(None, inFontSize)
+		else:
+			self.font = inFontTotal
+
+
+
+
+
+
+
+
+
+#### UPON STARTUP ####
+
+default_preferences = {
+	"bigTimer_backgroundColors": ["black"],
+	"defaultFontFamily": "LinuxLibertineCapitals-YOpa.ttf",
+}
+# for testing: remove later
+savePrefs(prefs=default_preferences)
+
+
+autoVer()
+
+
+with open("preferences.json", "r") as f:
+	preferences = json.load(f)
+
+
+
+pygame.display.set_caption("bla")
