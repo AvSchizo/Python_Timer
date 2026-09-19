@@ -1,0 +1,5 @@
+import pygame
+from decimal import Decimal
+decimal = Decimal
+
+print(decimal("1"))
