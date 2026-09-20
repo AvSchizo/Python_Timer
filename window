@@ -1,6 +1,8 @@
 import pygame
 pygame.init()
 
+import keyboard
+
 import json
 
 from decimal import Decimal
@@ -26,23 +28,96 @@ def autoVer():
 ##                                      ##
 ##########################################
 
-class bigTimerClass():
+def timerSetup(self, inFontTotal=None, inFont=None, inFontSize=50):
 
-	def __init__(self, inFontTotal=None, inFont=None, inFontSize=50):
+	if inFont == None:
+		fontFamily = preferences["defaultFontFamily"]
+	else:
+		fontFamily = inFont
 
-		if inFont == None:
-			fontFamily = preferences["defaultFontFamily"]
+	# inFontTotal is whole pygame font object
+	if inFontTotal == None:
+		try:
+			self.font = pygame.font.Font(fontFamily, inFontSize)
+		except:
+			self.font = pygame.font.Font(None, inFontSize)
+	else:
+		self.font = inFontTotal
+
+
+
+
+class timerClass():
+
+	def update(self):
+		if self.countingTime:
+			self.countedTime += decimal(str(pygame.time.get_ticks()))-lastTime
+		self.printedTime = self.font.render(str(self.countedTime/decimal("1000")), True, self.fontColor)
+
+	
+
+	def draw(self, placement=(0, 0)):
+		screen.blit(self.playground.actual, placement)
+		screen.blit(self.printedTime, placement)
+
+
+
+
+# area timer text sits in
+class playgroundClass():
+
+	def __init__(self, inHeight, inColor):
+
+		self.height = inHeight
+		self.width = screen.get_width()
+
+		self.actual = pygame.surface.Surface((self.width, self.height))
+		self.actual.fill(inColor)
+
+
+
+
+class bigTimerClass(timerClass):
+
+	def __init__(self, inFontTotal=None, inFontFamily=None, inFontSize=50, inFontColor=None, playground_inHeight=None, playground_inColor=None):
+		super().__init__() 
+
+		# font
+		timerSetup(self=self, inFontTotal=inFontTotal, inFont=inFontFamily, inFontSize=inFontSize)
+
+		# type
+		self.type = "bigTimer"
+
+		# playground
+		if playground_inHeight == None:
+			playground_forHeight = preferences["bigTimer_playgroundHeight"]
+			if preferences["bigTimer_playgroundHeight"] == "sameasfont":
+				playground_forHeight = inFontSize * (3/5)
 		else:
-			fontFamily = inFont
+			playground_forHeight = playground_inHeight
 
-		# inFontTotal is whole pygame font object
-		if inFontTotal == None:
-			try:
-				self.font = pygame.font.Font(fontFamily, inFontSize)
-			except:
-				self.font = pygame.font.Font(None, inFontSize)
+		if playground_inColor == None:
+			playground_forColor = preferences["bigTimer_backgroundColor"]
 		else:
-			self.font = inFontTotal
+			playground_forColor = playground_inColor
+
+		self.playground = playgroundClass(playground_forHeight, playground_forColor)
+
+		# counting
+		self.countingTime = True
+		self.countedTime = decimal("0.000")
+
+		# numbers
+		if inFontColor == None:
+			self.fontColor = preferences["defaultFontColor"]
+		else:
+			self.fontColor = inFontColor
+		
+
+
+
+
+
 
 
 
@@ -54,9 +129,18 @@ class bigTimerClass():
 
 #### UPON STARTUP ####
 
+# preferences
 default_preferences = {
-	"bigTimer_backgroundColors": ["black"],
+	"commandHotkeys": {
+		"progress": "ctrl+shift+alt+end",
+		"pause": "ctrl+shift+alt+insert",
+		"skipSplit": "ctrl+shift+alt+page down",
+	},
+	"screen_defaultWidth": 200,
+	"bigTimer_backgroundColor": "blue",
+	"bigTimer_playgroundHeight": "sameasfont",
 	"defaultFontFamily": "LinuxLibertineCapitals-YOpa.ttf",
+	"defaultFontColor": "white",
 }
 # for testing: remove later
 savePrefs(prefs=default_preferences)
@@ -70,4 +154,51 @@ with open("preferences.json", "r") as f:
 
 
 
-pygame.display.set_caption("bla")
+
+
+
+screen = pygame.display.set_mode((preferences["screen_defaultWidth"], 400))
+clock = pygame.time.Clock()
+screenColor = "black"
+
+
+lastTime = decimal(str(pygame.time.get_ticks()))
+
+
+
+
+bigTimer1 = bigTimerClass()
+
+
+
+
+
+
+while True:
+
+	for event in pygame.event.get():
+	
+		if event.type == pygame.QUIT:
+
+			running = False
+			quit()
+
+
+
+
+	# updating area
+	bigTimer1.update()
+
+	lastTime = decimal(str(pygame.time.get_ticks()))
+
+	
+
+
+			
+	screen.fill(screenColor)
+
+	bigTimer1.draw()
+
+
+	pygame.display.update()
+	clock.tick(1000)
