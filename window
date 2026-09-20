@@ -31,7 +31,7 @@ def autoVer():
 def timerSetup(self, inFontTotal=None, inFont=None, inFontSize=50):
 
 	if inFont == None:
-		fontFamily = preferences["defaultFontFamily"]
+		fontFamily = "fonts/" + preferences["defaultFontFamily"]
 	else:
 		fontFamily = inFont
 
@@ -41,6 +41,7 @@ def timerSetup(self, inFontTotal=None, inFont=None, inFontSize=50):
 			self.font = pygame.font.Font(fontFamily, inFontSize)
 		except:
 			self.font = pygame.font.Font(None, inFontSize)
+			print("font not found, using default")
 	else:
 		self.font = inFontTotal
 
@@ -49,27 +50,93 @@ def timerSetup(self, inFontTotal=None, inFont=None, inFontSize=50):
 
 class timerClass():
 
+	def pause(self):
+		if self.countingTime:
+			self.countingTime = False
+		else:
+			self.countingTime = True
+
+
+
 	def update(self):
 		if self.countingTime:
 			self.countedTime += decimal(str(pygame.time.get_ticks()))-lastTime
-		self.printedTime = self.font.render(str(self.countedTime/decimal("1000")), True, self.fontColor)
+		self.printedTime = self.font.render(self.setupPrintedTime(), True, self.fontColor)
 
 	
 
-	def draw(self, placement=(0, 0)):
-		screen.blit(self.playground.actual, placement)
-		screen.blit(self.printedTime, placement)
+	def draw(self, placement=None):
+		if placement == None:
+			playPlace = (0, 0)
+			if preferences["timeOnLeft"]:
+				forPlacement = (0, 0)
+			else:
+				forPlacement = (self.printedTime.get_rect(right=preferences["screen_defaultWidth"])[0], 0)
+		else:
+			playPlace = (0, placement)
+			if preferences["timeOnLeft"]:
+				forPlacement = (0, placement)
+			else:
+				forPlacement = (self.printedTime.get_rect(right=preferences["screen_defaultWidth"])[0], placement)
+		screen.blit(self.playground.actual, playPlace)
+		screen.blit(self.printedTime, forPlacement)
+
+
+
+	def setupPrintedTime(self):
+		flabber = decimal(self.countedTime/decimal("1000"))
+
+		secondsTotal = int(flabber)
+		seconds = secondsTotal%60
+
+		minutesTotal = int(secondsTotal/60)
+		minutes = minutesTotal%60
+
+		hoursTotal = int(minutesTotal/60)
+		hours = hoursTotal%24
+
+		daysTotal = int(hoursTotal/24)
+		days = daysTotal%60
+
+
+		startLevel = 0
+		if minutesTotal > 0:
+			startLevel = 1
+		if hoursTotal > 0:
+			startLevel = 2
+		if daysTotal > 0:
+			startLevel = 3
+
+		def ad(l, i, ee):
+			ab = ee
+			if startLevel > l and i < 10:
+				ab += "0"
+			if startLevel >= l:
+				ab += str(i)
+				if l > 0:
+					ab += ","
+
+			return str(ab)
+
+		toReturn = ""
+		toReturn = ad(3, days, toReturn)
+		toReturn = ad(2, hours, toReturn)
+		toReturn = ad(1, minutes, toReturn)
+		toReturn = ad(0, seconds, toReturn)
+		toReturn += "." + str(flabber).split(".")[1]
+
+		return toReturn
 
 
 
 
-# area timer text sits in
+# area text sits in
 class playgroundClass():
 
 	def __init__(self, inHeight, inColor):
 
 		self.height = inHeight
-		self.width = screen.get_width()
+		self.width = preferences["screen_defaultWidth"]
 
 		self.actual = pygame.surface.Surface((self.width, self.height))
 		self.actual.fill(inColor)
@@ -88,11 +155,23 @@ class bigTimerClass(timerClass):
 		# type
 		self.type = "bigTimer"
 
+		# counting
+		self.countingTime = False
+		self.countedTime = decimal("0.000")
+
+		# numbers
+		if inFontColor == None:
+			self.fontColor = preferences["defaultFontColor"]
+		else:
+			self.fontColor = inFontColor
+
+		self.update()
+
 		# playground
 		if playground_inHeight == None:
 			playground_forHeight = preferences["bigTimer_playgroundHeight"]
 			if preferences["bigTimer_playgroundHeight"] == "sameasfont":
-				playground_forHeight = inFontSize * (3/5)
+				playground_forHeight = self.printedTime.get_rect().height
 		else:
 			playground_forHeight = playground_inHeight
 
@@ -102,16 +181,6 @@ class bigTimerClass(timerClass):
 			playground_forColor = playground_inColor
 
 		self.playground = playgroundClass(playground_forHeight, playground_forColor)
-
-		# counting
-		self.countingTime = True
-		self.countedTime = decimal("0.000")
-
-		# numbers
-		if inFontColor == None:
-			self.fontColor = preferences["defaultFontColor"]
-		else:
-			self.fontColor = inFontColor
 		
 
 
@@ -133,41 +202,58 @@ class bigTimerClass(timerClass):
 default_preferences = {
 	"commandHotkeys": {
 		"progress": "ctrl+shift+alt+end",
-		"pause": "ctrl+shift+alt+insert",
-		"skipSplit": "ctrl+shift+alt+page down",
+		"pause": "ctrl+shift+alt+insert+delete",
+		"returnSplit": "ctrl+shift+alt+delete+page up",
+		"skipSplit": "ctrl+shift+alt+delete+page down",
 	},
-	"screen_defaultWidth": 200,
-	"bigTimer_backgroundColor": "blue",
+	"timerCaption": "TEST TIMER",
+	"screen_defaultWidth": 400,
+	"bigTimer_backgroundColor": "lavender",
 	"bigTimer_playgroundHeight": "sameasfont",
-	"defaultFontFamily": "LinuxLibertineCapitals-YOpa.ttf",
-	"defaultFontColor": "white",
+	"defaultFontFamily": "IBMPlexMono-Regular.ttf",
+	"defaultFontColor": "black",
+	"timeOnLeft": False,
 }
-# for testing: remove later
-savePrefs(prefs=default_preferences)
-
-
 autoVer()
 
+# for testing: remove later
+savePrefs(prefs=default_preferences)
 
 with open("preferences.json", "r") as f:
 	preferences = json.load(f)
 
 
 
+def updatePressed(dict):
+	for key in preferences["commandHotkeys"].keys():
+		if not keyboard.is_pressed(preferences["commandHotkeys"][key]):
+			keysPressed[key] = False
+
+keysPressed = {}
+for key in preferences["commandHotkeys"].keys():
+	keysPressed[key] = False
 
 
 
-screen = pygame.display.set_mode((preferences["screen_defaultWidth"], 400))
-clock = pygame.time.Clock()
-screenColor = "black"
+
+
 
 
 lastTime = decimal(str(pygame.time.get_ticks()))
 
-
-
-
 bigTimer1 = bigTimerClass()
+
+
+
+screen = pygame.display.set_mode((preferences["screen_defaultWidth"], bigTimer1.printedTime.get_rect().height))
+pygame.display.set_caption(preferences["timerCaption"])
+screenColor = "black"
+clock = pygame.time.Clock()
+
+
+
+
+
 
 
 
@@ -182,6 +268,19 @@ while True:
 
 			running = False
 			quit()
+
+
+
+	# player inputs
+	for key in preferences["commandHotkeys"].keys():
+
+		if keyboard.is_pressed(preferences["commandHotkeys"]["pause"]) and not keysPressed["pause"]:
+			print("pause")
+			bigTimer1.pause()
+			keysPressed["pause"] = True
+
+
+	updatePressed(keysPressed)
 
 
 
