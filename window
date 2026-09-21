@@ -1,8 +1,6 @@
 import pygame
 pygame.init()
 
-import keyboard
-
 import json
 
 from decimal import Decimal
@@ -206,6 +204,7 @@ default_preferences = {
 		"returnSplit": "ctrl+shift+alt+delete+page up",
 		"skipSplit": "ctrl+shift+alt+delete+page down",
 	},
+	"webMode": False,
 	"timerCaption": "TEST TIMER",
 	"screen_defaultWidth": 400,
 	"bigTimer_backgroundColor": "lavender",
@@ -224,14 +223,22 @@ with open("preferences.json", "r") as f:
 
 
 
-def updatePressed(dict):
-	for key in preferences["commandHotkeys"].keys():
-		if not keyboard.is_pressed(preferences["commandHotkeys"][key]):
-			keysPressed[key] = False
 
-keysPressed = {}
-for key in preferences["commandHotkeys"].keys():
-	keysPressed[key] = False
+if preferences["webMode"]:
+	pass
+
+else:
+	# import is here because you can't tell whether it's webMode if you import it at the top
+	import keyboard
+
+	def updatePressed(dict):
+		for key in preferences["commandHotkeys"].keys():
+			if not keyboard.is_pressed(preferences["commandHotkeys"][key]):
+				keysPressed[key] = False
+
+	keysPressed = {}
+	for key in preferences["commandHotkeys"].keys():
+		keysPressed[key] = False
 
 
 
@@ -270,17 +277,24 @@ while True:
 			quit()
 
 
+		if preferences["webMode"]:
+
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+				bigTimer1.pause()
+
+
 
 	# player inputs
-	for key in preferences["commandHotkeys"].keys():
+	if not preferences["webMode"]:
+		for key in preferences["commandHotkeys"].keys():
+	
+			if keyboard.is_pressed(preferences["commandHotkeys"]["pause"]) and not keysPressed["pause"]:
+				print("pause")
+				bigTimer1.pause()
+				keysPressed["pause"] = True
 
-		if keyboard.is_pressed(preferences["commandHotkeys"]["pause"]) and not keysPressed["pause"]:
-			print("pause")
-			bigTimer1.pause()
-			keysPressed["pause"] = True
 
-
-	updatePressed(keysPressed)
+		updatePressed(keysPressed)
 
 
 
