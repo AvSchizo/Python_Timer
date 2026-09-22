@@ -302,7 +302,6 @@ while True:
 		for key in preferences["commandHotkeys"].keys():
 	
 			if keyboard.is_pressed(preferences["commandHotkeys"]["pause"]) and not keysPressed["pause"]:
-				print("pause")
 				bigTimer1.pause()
 				keysPressed["pause"] = True
 
