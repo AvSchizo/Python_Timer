@@ -189,8 +189,31 @@ class bigTimerClass(timerClass):
 
 
 
+# split stuff
 class splitClass():
-	pass
+
+	def __init__(self, splitNumber=""):
+
+		self.type = "split"
+
+		self.name = "split" + str(splitNumber)
+
+		self.time = None
+
+
+
+
+class splitContainerClass():
+
+	def __init__(self, amountOfSplits=1):
+
+		self.type = "splitContainer"
+
+		self.splits = []
+		for i in range(max(1, amountOfSplits)):
+			self.splits.append(splitClass(i+1))
+
+		self.splitPointer = 0
 		
 
 
