@@ -58,6 +58,12 @@ class timerClass():
 
 
 
+	def restart(self):
+		self.countingTime = False
+		self.countedTime = decimal("0.000")
+
+
+
 	def update(self):
 		if self.countingTime:
 			self.countedTime += decimal(str(pygame.time.get_ticks()))-lastTime
@@ -181,6 +187,12 @@ class bigTimerClass(timerClass):
 			playground_forColor = playground_inColor
 
 		self.playground = playgroundClass(playground_forHeight, playground_forColor)
+
+
+
+
+class splitClass():
+	pass
 		
 
 
@@ -202,9 +214,10 @@ class bigTimerClass(timerClass):
 default_preferences = {
 	"commandHotkeys": {
 		"progress": "ctrl+shift+alt+end",
-		"pause": "ctrl+shift+alt+insert+delete",
+		"pause": "shift+down",
 		"returnSplit": "ctrl+shift+alt+delete+page up",
 		"skipSplit": "ctrl+shift+alt+delete+page down",
+		"restart": "ctrl+shift+alt+delete+end",
 	},
 	"timerCaption": "TEST TIMER",
 	"screen_defaultWidth": 400,
@@ -274,10 +287,16 @@ while True:
 	# player inputs
 	for key in preferences["commandHotkeys"].keys():
 
+		# pause
 		if keyboard.is_pressed(preferences["commandHotkeys"]["pause"]) and not keysPressed["pause"]:
-			print("pause")
 			bigTimer1.pause()
 			keysPressed["pause"] = True
+
+		# restart
+		if keyboard.is_pressed(preferences["commandHotkeys"]["restart"]) and not keysPressed["restart"]:
+			print("restarted")
+			bigTimer1.restart()
+			keysPressed["restart"] = True
 
 
 	updatePressed(keysPressed)
