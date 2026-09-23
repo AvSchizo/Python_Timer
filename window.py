@@ -416,7 +416,7 @@ default_preferences = {
 		"skipSplit": "ctrl+shift+alt+delete+page down",
 		"restart": "ctrl+shift+alt+delete+end",
 	},
-	"webMode": True,
+	"webMode": False,
 	"timerCaption": "TEST TIMER",
 	"screen_defaultWidth": 400,
 	"bigTimer_backgroundColor": "lavender",
@@ -434,7 +434,7 @@ default_preferences = {
 	"split_truncation": 2,
 	#       ^                  ^
 	# not implemented yet
-	"defaultFontFamily": "IBMPlexMono-Bold.ttf",
+	"defaultFontFamily": "IBMPlexMono-Regular.ttf",
 	"defaultFontColor": "black",
 	"incrementSeperator": ":",
 	"spaceAfterIncrementSeperator": False,
