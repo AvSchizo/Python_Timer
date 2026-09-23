@@ -19,6 +19,16 @@ def autoVer():
 
 
 
+def findFirstOf(what, o):
+	for b in o:
+		if b.type == what:
+			return b
+	return None
+
+
+
+
+
 
 ##########################################
 ##                                      ##
@@ -288,7 +298,9 @@ class splitClass():
 	def updateTime(self, time=None, inTruncation=None):
 		if time == None:
 			if self.time == None:
-				wap = 0
+				self.printedTime = self.font.render("", True, self.fontColor)
+				self.printedName = self.font.render(self.name, True, self.fontColor)
+				return
 			else:
 				wap = self.time
 		else:
@@ -338,10 +350,10 @@ class splitClass():
 		toReturn = ad(2, hours, toReturn)
 		toReturn = ad(1, minutes, toReturn)
 		toReturn = ad(0, seconds, toReturn)
-		if wap == 0:
-			toReturn = ''
-		else:
+		try:
 			toReturn += "." + str(flabber).split(".")[1][:truncation]
+		except:
+			pass
 
 		self.printedTime = self.font.render(toReturn, True, self.fontColor)
 		self.printedName = self.font.render(self.name, True, self.fontColor)
@@ -382,6 +394,13 @@ class splitContainerClass():
 		self.height = 0
 		for p in self.splits:
 			self.height += p.playground.actual.get_height()
+	
+
+
+	def progress(self, La):
+		bla = findFirstOf("bigTimer", La)
+		if bla == None:
+			self.splits[self.splitPointer].updateTime(time=)
 
 
 
