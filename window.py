@@ -59,6 +59,26 @@ class timerClass():
 	def restart(self):
 		self.countingTime = False
 		self.countedTime = decimal("0.000")
+		
+
+
+	def progress(self, stopping=None, inList=None):
+		if stopping == None:
+
+			if inList == None:
+				gonnaStop = False
+			else:
+				tener = True
+				for block in inList:
+					if block.type == "splitContainer":
+						tener = False
+				gonnaStop = tener
+		
+		else:
+			gonnaStop = stopping
+		
+		if gonnaStop:
+			self.pause()
 
 
 
@@ -69,25 +89,34 @@ class timerClass():
 
 	
 
-	def draw(self, placement=None):
-		if placement == None:
-			playPlace = (0, 0)
-			if preferences["timeOnLeft"]:
-				forPlacement = (0, 0)
-			else:
-				forPlacement = (self.printedTime.get_rect(right=preferences["screen_defaultWidth"])[0], 0)
+	def draw(self, placement=0, inFrame=0):
+		playPlace = [0, 0]
+		forPlacement = [0, 0]
+
+		# verticle
+		if preferences["timeVertSpacing"] == "bottom":
+			vertIncrement = self.printedTime.get_rect(bottom=self.playground.height)[1]
+		elif preferences["timeVertSpacing"] == "middle":
+			vertIncrement = self.printedTime.get_rect(center=(0, self.playground.height/2))[1]
 		else:
-			playPlace = (0, placement)
-			if preferences["timeOnLeft"]:
-				forPlacement = (0, placement)
-			else:
-				forPlacement = (self.printedTime.get_rect(right=preferences["screen_defaultWidth"])[0], placement)
+			vertIncrement = 0
+			if preferences["timeVertSpacing"] != "top":
+				print("can't recognize \"timeVertSpacing\" in preferences.json")
+		playPlace[1] = placement
+		forPlacement[1] = placement + vertIncrement
+		
+		# horizontal
+		if preferences["timeOnLeft"]:
+			forPlacement[0] = 0
+		else:
+			forPlacement[0] = self.printedTime.get_rect(right=preferences["screen_defaultWidth"])[0]
+
 		screen.blit(self.playground.actual, playPlace)
 		screen.blit(self.printedTime, forPlacement)
 
 
 
-	def setupPrintedTime(self):
+	def setupPrintedTime(self, truncation=3):
 		flabber = decimal(self.countedTime/decimal("1000"))
 
 		secondsTotal = int(flabber)
@@ -118,7 +147,9 @@ class timerClass():
 			if startLevel >= l:
 				ab += str(i)
 				if l > 0:
-					ab += ","
+					ab += preferences["incrementSeperator"]
+					if preferences["spaceAfterIncrementSeperator"]:
+						ab += " "
 
 			return str(ab)
 
@@ -127,7 +158,7 @@ class timerClass():
 		toReturn = ad(2, hours, toReturn)
 		toReturn = ad(1, minutes, toReturn)
 		toReturn = ad(0, seconds, toReturn)
-		toReturn += "." + str(flabber).split(".")[1]
+		toReturn += "." + str(flabber).split(".")[1][:truncation]
 
 		return toReturn
 
@@ -150,11 +181,17 @@ class playgroundClass():
 
 class bigTimerClass(timerClass):
 
-	def __init__(self, inFontTotal=None, inFontFamily=None, inFontSize=50, inFontColor=None, playground_inHeight=None, playground_inColor=None):
+	def __init__(self, inFontTotal=None, inFontFamily=None, inFontSize=None, inFontColor=None, playground_inHeight=None, playground_inColor=None):
 		super().__init__()
 
 		# font
-		timerSetup(self=self, inFontTotal=inFontTotal, inFont=inFontFamily, inFontSize=inFontSize)
+		if inFontSize == None:
+			forFontSize = preferences["bigTimer_fontSize"]
+			forFontSize = int(forFontSize)
+
+		else:
+			forFontSize = inFontSize
+		timerSetup(self=self, inFontTotal=inFontTotal, inFont=inFontFamily, inFontSize=forFontSize)
 
 		# type
 		self.type = "bigTimer"
@@ -176,6 +213,20 @@ class bigTimerClass(timerClass):
 			playground_forHeight = preferences["bigTimer_playgroundHeight"]
 			if preferences["bigTimer_playgroundHeight"] == "sameasfont":
 				playground_forHeight = self.printedTime.get_rect().height
+			else:
+				playground_forHeight = preferences["bigTimer_playgroundHeight"]
+			
+
+			if preferences["bigTimer_extraPlaygroundSize_action"] == "*":
+				playground_forHeight *= preferences["bigTimer_extraPlaygroundSize_value"]
+			elif preferences["bigTimer_extraPlaygroundSize_action"] == "+":
+				playground_forHeight += preferences["bigTimer_extraPlaygroundSize_value"]
+			elif preferences["bigTimer_extraPlaygroundSize_action"] == "/":
+				playground_forHeight /= preferences["bigTimer_extraPlaygroundSize_value"]
+			elif preferences["bigTimer_extraPlaygroundSize_action"] == "-":
+				playground_forHeight -= preferences["bigTimer_extraPlaygroundSize_value"]
+			
+			playground_forHeight = int(playground_forHeight)
 		else:
 			playground_forHeight = playground_inHeight
 
@@ -185,6 +236,13 @@ class bigTimerClass(timerClass):
 			playground_forColor = playground_inColor
 
 		self.playground = playgroundClass(playground_forHeight, playground_forColor)
+
+		self.height = self.playground.height
+	
+
+
+	def setupPrintedTime(self):
+		return super().setupPrintedTime(truncation=preferences["bigTimer_truncation"])
 
 
 
@@ -227,7 +285,7 @@ class splitClass():
 
 
 
-	def updateTime(self, time=None):
+	def updateTime(self, time=None, inTruncation=None):
 		if time == None:
 			if self.time == None:
 				wap = 0
@@ -235,6 +293,11 @@ class splitClass():
 				wap = self.time
 		else:
 			wap = time
+		
+		if inTruncation == None:
+			truncation = preferences["split_truncation"]
+		else:
+			truncation = 2
 
 		flabber = decimal(wap/decimal("1000"))
 
@@ -278,7 +341,7 @@ class splitClass():
 		if wap == 0:
 			toReturn = ''
 		else:
-			toReturn += "." + str(flabber).split(".")[1][:2]
+			toReturn += "." + str(flabber).split(".")[1][:truncation]
 
 		self.printedTime = self.font.render(toReturn, True, self.fontColor)
 		self.printedName = self.font.render(self.name, True, self.fontColor)
@@ -322,7 +385,7 @@ class splitContainerClass():
 
 
 
-	def draw(self, goDown=0):
+	def draw(self, goDown=0, inFrame=None):
 		down = 0
 		for s in self.splits:
 			s.draw(goDown+down)
@@ -353,16 +416,30 @@ default_preferences = {
 		"skipSplit": "ctrl+shift+alt+delete+page down",
 		"restart": "ctrl+shift+alt+delete+end",
 	},
-	"webMode": False,
+	"webMode": True,
 	"timerCaption": "TEST TIMER",
 	"screen_defaultWidth": 400,
 	"bigTimer_backgroundColor": "lavender",
 	"bigTimer_playgroundHeight": "sameasfont",
+	"bigTimer_fontFamily": "sameasdefault",
+	"bigTimer_extraPlaygroundSize_action": "*",
+	"bigTimer_extraPlaygroundSize_value": (4/3),
+	"bigTimer_fontSize": 40,
+	"bigTimer_truncation": 2,
+	#         ^                   ^
+	# not implemented yet
 	"split_backgroundColors": ["slateGrey"],
 	"split_playgroundHeight": "sameasfont",
-	"defaultFontFamily": "IBMPlexMono-Regular.ttf",
+	"split_fontFamily": "sameasdefault",
+	"split_truncation": 2,
+	#       ^                  ^
+	# not implemented yet
+	"defaultFontFamily": "IBMPlexMono-Bold.ttf",
 	"defaultFontColor": "black",
+	"incrementSeperator": ":",
+	"spaceAfterIncrementSeperator": False,
 	"timeOnLeft": False,
+	"timeVertSpacing": "bottom",
 }
 autoVer()
 
@@ -399,14 +476,16 @@ else:
 
 lastTime = decimal(str(pygame.time.get_ticks()))
 
-bigTimer1 = bigTimerClass()
-splitContainer1 = splitContainerClass()
+layout = [
+	bigTimerClass(),
+	splitContainerClass(),
+]
 
 
 
 screenHeight = 0
-screenHeight += bigTimer1.playground.actual.get_height()
-screenHeight += splitContainer1.height
+for block in layout:
+	screenHeight += block.height
 screen = pygame.display.set_mode((preferences["screen_defaultWidth"], screenHeight))
 pygame.display.set_caption(preferences["timerCaption"])
 screenColor = "black"
@@ -422,7 +501,9 @@ clock = pygame.time.Clock()
 
 
 
+currentFrame = 0
 while True:
+	currentFrame += 1
 
 	for event in pygame.event.get():
 	
@@ -435,7 +516,10 @@ while True:
 		if preferences["webMode"]:
 
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-				bigTimer1.pause()
+				
+				for block in layout:
+					if block.type == "bigTimer":
+						block.pause()
 
 
 
@@ -444,12 +528,16 @@ while True:
 		for key in preferences["commandHotkeys"].keys():
 	
 			if keyboard.is_pressed(preferences["commandHotkeys"]["pause"]) and not keysPressed["pause"]:
-				bigTimer1.pause()
+				for block in layout:
+					if block.type == "bigTimer":
+						block.pause()
 				keysPressed["pause"] = True
 
 		# restart
 		if keyboard.is_pressed(preferences["commandHotkeys"]["restart"]) and not keysPressed["restart"]:
-			bigTimer1.restart()
+			for block in layout:
+				if block.type == "bigTimer":
+					block.restart()
 			keysPressed["restart"] = True
 
 
@@ -459,7 +547,9 @@ while True:
 
 
 	# updating area
-	bigTimer1.update()
+	for block in layout:
+		if block.type == "bigTimer":
+			block.update()
 
 	lastTime = decimal(str(pygame.time.get_ticks()))
 
@@ -469,9 +559,11 @@ while True:
 			
 	screen.fill(screenColor)
 
-	bigTimer1.draw()
-	splitContainer1.draw(bigTimer1.playground.height)
+	indent = 0
+	for block in layout:
+		block.draw(indent, inFrame=currentFrame)
+		indent += block.height
 
 
 	pygame.display.update()
-	clock.tick(1000)
+	clock.tick(100)
