@@ -341,7 +341,7 @@ class splitClass():
 			if startLevel >= l:
 				ab += str(i)
 				if l > 0:
-					ab += ","
+					ab += preferences["incrementSeperator"]
 
 			return str(ab)
 
@@ -462,8 +462,9 @@ class splitContainerClass():
 # preferences
 default_preferences = {
 	"commandHotkeys": {
+		# it WILL let you do multiple of these at once so don't fuck it up
 		"progress": "ctrl+shift+alt+delete+end",
-		"pause": "ctrl+shift+end",
+		"pause": "ctrl+shift+down",
 		"returnSplit": "ctrl+shift+alt+delete+page up",
 		"skipSplit": "ctrl+shift+alt+delete+page down",
 		"restart": "ctrl+shift+alt+f9",
@@ -634,7 +635,7 @@ while True:
 
 		# progress
 		keyword = "progress"
-		if updatePressed(ba=keyword) and not keysPressed[keyword]:
+		if keyboard.is_pressed(preferences["commandHotkeys"][keyword]) and not keysPressed[keyword]:
 			progress(layout, keyword)
 
 
