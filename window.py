@@ -87,7 +87,7 @@ class timerClass():
 		else:
 			gonnaStop = stopping
 		
-		if gonnaStop:
+		if gonnaStop and self.countingTime:
 			self.pause()
 
 
@@ -380,8 +380,13 @@ class splitContainerClass():
 
 		self.type = "splitContainer"
 
+		# 0: not started; 1: in progress; 2: finished
+		self.state = 0
+
+		self.splitCount = amountOfSplits
+
 		self.splits = []
-		for i in range(max(1, amountOfSplits)):
+		for i in range(max(1, self.splitCount)):
 			self.splits.append(splitClass(i+1))
 
 		self.splitPointer = 0
@@ -399,8 +404,36 @@ class splitContainerClass():
 
 	def progress(self, La):
 		bla = findFirstOf("bigTimer", La)
-		if bla == None:
-			self.splits[self.splitPointer].updateTime(time=)
+		if self.state == 1:
+			if bla == None:
+				self.splits[self.splitPointer].updateTime()
+			else:
+				self.splits[self.splitPointer].updateTime(bla.countedTime)
+
+			if self.splitPointer == len(self.splits) - 1:
+				for block in La:
+					if block.type == "bigTimer":
+						block.progress(stopping=True)
+				self.state = 2
+			else:
+				self.splitPointer += 1
+
+		elif self.state == 0:
+			self.state += 1
+			for block in La:
+				if block.type == "bigTimer":
+					block.pause()
+
+
+
+	def pause(self, excess=[]):
+		# just in case accidentally gets called
+		pass
+
+
+
+	def restart(self):
+		self.__init__(self.splitCount)
 
 
 
@@ -429,11 +462,11 @@ class splitContainerClass():
 # preferences
 default_preferences = {
 	"commandHotkeys": {
-		"progress": "ctrl+shift+alt+end",
-		"pause": "shift+down",
+		"progress": "ctrl+shift+alt+delete+end",
+		"pause": "ctrl+shift+end",
 		"returnSplit": "ctrl+shift+alt+delete+page up",
 		"skipSplit": "ctrl+shift+alt+delete+page down",
-		"restart": "ctrl+shift+alt+delete+end",
+		"restart": "ctrl+shift+alt+f9",
 	},
 	"webMode": False,
 	"timerCaption": "TEST TIMER",
@@ -478,10 +511,23 @@ else:
 	# import is here because you can't tell whether it's webMode if you import it at the top
 	import keyboard
 
-	def updatePressed(dict):
-		for key in preferences["commandHotkeys"].keys():
-			if not keyboard.is_pressed(preferences["commandHotkeys"][key]):
-				keysPressed[key] = False
+	def updatePressed(dict=None, ba=None):
+		if ba == None:
+			for key in preferences["commandHotkeys"].keys():
+				if not keyboard.is_pressed(preferences["commandHotkeys"][key]):
+					keysPressed[key] = False
+
+		else:
+			# takes ba, if there is exactly one command activated and it's ba, return True
+			if keyboard.is_pressed(preferences["commandHotkeys"][ba]):
+				for key in preferences["commandHotkeys"].keys():
+					if key == ba:
+						continue
+					if keyboard.is_pressed(preferences["commandHotkeys"][key]):
+						return False
+				return True
+			else:
+				return False
 
 	keysPressed = {}
 	for key in preferences["commandHotkeys"].keys():
@@ -497,7 +543,7 @@ lastTime = decimal(str(pygame.time.get_ticks()))
 
 layout = [
 	bigTimerClass(),
-	splitContainerClass(),
+	splitContainerClass(amountOfSplits=2),
 ]
 
 
@@ -510,6 +556,49 @@ pygame.display.set_caption(preferences["timerCaption"])
 screenColor = "black"
 clock = pygame.time.Clock()
 
+
+
+
+
+def progress(la, webMode=None):
+	for block in layout:
+		if block.type == "splitContainer":
+			block.progress(layout)
+
+	if webMode == None:
+		pass
+	else:
+		try:
+			keysPressed[keyword] = True
+		except:
+			print("debug: progress | no keysPressed available for given keyword")
+
+
+def pause(la, webMode=None):
+	for block in layout:
+		if block.type == "bigTimer":
+			block.pause()
+
+	if webMode == None:
+		pass
+	else:
+		try:
+			keysPressed[keyword] = True
+		except:
+			print("debug: pause | no keysPressed available for given keyword")
+
+
+def restart(la, webMode=None):
+	for block in layout:
+		block.restart()
+
+	if webMode == None:
+		pass
+	else:
+		try:
+			keysPressed[keyword] = True
+		except:
+			print("debug: restart | no keysPressed available for given keyword")
 
 
 
@@ -536,28 +625,28 @@ while True:
 
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
 				
-				for block in layout:
-					if block.type == "bigTimer":
-						block.pause()
+				progress(layout)
 
 
 
 	# player inputs
 	if not preferences["webMode"]:
-		for key in preferences["commandHotkeys"].keys():
-	
-			if keyboard.is_pressed(preferences["commandHotkeys"]["pause"]) and not keysPressed["pause"]:
-				for block in layout:
-					if block.type == "bigTimer":
-						block.pause()
-				keysPressed["pause"] = True
+
+		# progress
+		keyword = "progress"
+		if updatePressed(ba=keyword) and not keysPressed[keyword]:
+			progress(layout, keyword)
+
+
+		# pause
+		keyword = "pause"
+		if keyboard.is_pressed(preferences["commandHotkeys"][keyword]) and not keysPressed[keyword]:
+			pause(layout, keyword)
 
 		# restart
-		if keyboard.is_pressed(preferences["commandHotkeys"]["restart"]) and not keysPressed["restart"]:
-			for block in layout:
-				if block.type == "bigTimer":
-					block.restart()
-			keysPressed["restart"] = True
+		keyword = "restart"
+		if keyboard.is_pressed(preferences["commandHotkeys"][keyword]) and not keysPressed[keyword]:
+			restart(layout, keyword)
 
 
 		updatePressed(keysPressed)
