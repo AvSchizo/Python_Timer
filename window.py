@@ -58,7 +58,10 @@ def timerSetup(self, inFontTotal=None, inFont=None, inFontSize=50):
 
 class timerClass():
 
-	def pause(self):
+	def pause(self, forced=False):
+		if self.countedTime == decimal("0.000") and not forced:
+			return
+
 		if self.countingTime:
 			self.countingTime = False
 		else:
@@ -88,7 +91,7 @@ class timerClass():
 			gonnaStop = stopping
 		
 		if gonnaStop and self.countingTime:
-			self.pause()
+			self.pause(forced=True)
 
 
 
@@ -260,11 +263,14 @@ class bigTimerClass(timerClass):
 # split stuff
 class splitClass():
 
-	def __init__(self, splitNumber="", inFontTotal=None, inFontFamily=None, inFontSize=25, inFontColor=None, playground_inHeight=None, playground_inColor=None):
+	def __init__(self, splitNumber="", names=None, inFontTotal=None, inFontFamily=None, inFontSize=25, inFontColor=None, playground_inHeight=None, playground_inColor=None):
 
 		self.type = "split"
 
-		self.name = "split" + str(splitNumber)
+		if names == None:
+			self.name = "split" + str(splitNumber)
+		else:
+			self.name = names[splitNumber-1]
 
 		# font
 		timerSetup(self=self, inFontTotal=inFontTotal, inFont=inFontFamily, inFontSize=inFontSize)
@@ -277,10 +283,22 @@ class splitClass():
 
 		self.updateTime()
 
+		# playground
 		if playground_inHeight == None:
 			playground_forHeight = preferences["split_playgroundHeight"]
 			if preferences["split_playgroundHeight"] == "sameasfont":
 				playground_forHeight = max(self.printedName.get_rect().height, self.printedTime.get_rect().height)
+
+			if preferences["split_extraPlaygroundSize_action"] == "*":
+				playground_forHeight *= preferences["split_extraPlaygroundSize_value"]
+			elif preferences["split_extraPlaygroundSize_action"] == "+":
+				playground_forHeight += preferences["split_extraPlaygroundSize_value"]
+			elif preferences["split_extraPlaygroundSize_action"] == "/":
+				playground_forHeight /= preferences["split_extraPlaygroundSize_value"]
+			elif preferences["split_extraPlaygroundSize_action"] == "-":
+				playground_forHeight -= preferences["split_extraPlaygroundSize_value"]
+			
+			playground_forHeight = int(playground_forHeight)
 		else:
 			playground_forHeight = playground_inHeight
 
@@ -376,7 +394,7 @@ class splitClass():
 
 class splitContainerClass():
 
-	def __init__(self, amountOfSplits=1):
+	def __init__(self, amountOfSplits=1, inNames=None):
 
 		self.type = "splitContainer"
 
@@ -387,7 +405,7 @@ class splitContainerClass():
 
 		self.splits = []
 		for i in range(max(1, self.splitCount)):
-			self.splits.append(splitClass(i+1))
+			self.splits.append(splitClass(i+1, names=inNames))
 
 		self.splitPointer = 0
 
@@ -404,6 +422,7 @@ class splitContainerClass():
 
 	def progress(self, La):
 		bla = findFirstOf("bigTimer", La)
+
 		if self.state == 1:
 			if bla == None:
 				self.splits[self.splitPointer].updateTime()
@@ -422,7 +441,8 @@ class splitContainerClass():
 			self.state += 1
 			for block in La:
 				if block.type == "bigTimer":
-					block.pause()
+					if not block.countingTime:
+						block.pause(forced=True)
 
 
 
@@ -469,7 +489,12 @@ default_preferences = {
 		"skipSplit": "ctrl+shift+alt+delete+page down",
 		"restart": "ctrl+shift+alt+f9",
 	},
-	"webMode": False,
+	"webMode": True,
+	"webModeHotkeys": {
+		"progress": pygame.K_SPACE,
+		"pause": pygame.K_p,
+		"restart": pygame.K_r,
+	},
 	"timerCaption": "TEST TIMER",
 	"screen_defaultWidth": 400,
 	"bigTimer_backgroundColor": "lavender",
@@ -479,14 +504,12 @@ default_preferences = {
 	"bigTimer_extraPlaygroundSize_value": (4/3),
 	"bigTimer_fontSize": 40,
 	"bigTimer_truncation": 2,
-	#         ^                   ^
-	# not implemented yet
 	"split_backgroundColors": ["slateGrey"],
 	"split_playgroundHeight": "sameasfont",
 	"split_fontFamily": "sameasdefault",
+	"split_extraPlaygroundSize_action": "+",
+	"split_extraPlaygroundSize_value": 30,
 	"split_truncation": 2,
-	#       ^                  ^
-	# not implemented yet
 	"defaultFontFamily": "IBMPlexMono-Regular.ttf",
 	"defaultFontColor": "black",
 	"incrementSeperator": ":",
@@ -624,9 +647,16 @@ while True:
 
 		if preferences["webMode"]:
 
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-				
+			wa = preferences["webModeHotkeys"]
+
+			if event.type == pygame.KEYDOWN and event.key == wa["progress"]:
 				progress(layout)
+
+			if event.type == pygame.KEYDOWN and event.key == wa["pause"]:
+				pause(layout)
+
+			if event.type == pygame.KEYDOWN and event.key == wa["restart"]:
+				restart(layout)
 
 
 
