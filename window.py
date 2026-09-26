@@ -489,7 +489,7 @@ default_preferences = {
 		"skipSplit": "ctrl+shift+alt+delete+page down",
 		"restart": "ctrl+shift+alt+f9",
 	},
-	"webMode": True,
+	"webMode": False,
 	"webModeHotkeys": {
 		"progress": pygame.K_SPACE,
 		"pause": pygame.K_p,
@@ -508,7 +508,7 @@ default_preferences = {
 	"split_playgroundHeight": "sameasfont",
 	"split_fontFamily": "sameasdefault",
 	"split_extraPlaygroundSize_action": "+",
-	"split_extraPlaygroundSize_value": 30,
+	"split_extraPlaygroundSize_value": 0,
 	"split_truncation": 2,
 	"defaultFontFamily": "IBMPlexMono-Regular.ttf",
 	"defaultFontColor": "black",
